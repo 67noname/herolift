@@ -7,7 +7,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 interface WorkoutEditorProps {
-  onSave: (workout: Workout) => void;
+  onSave: (workout: Workout) => Promise<void>;
   onClose: () => void;
 }
 
@@ -55,13 +55,38 @@ export function WorkoutEditor({ onSave, onClose }: WorkoutEditorProps) {
     );
   };
 
-  const handleSave = () => {
-    setError('');
+  const handleSave = async () => {
+  setError('');
 
-    if (!date) {
-      setError(t.editor.validation.dateRequired);
-      return;
-    }
+  if (!date) {
+    setError(t.editor.validation.dateRequired);
+    return;
+  }
+
+  const validSets = sets.filter((s) => s.weight > 0 && s.reps > 0);
+
+  if (validSets.length === 0) {
+    setError(t.editor.validation.minSets);
+    return;
+  }
+
+  const workout: Workout = {
+    id: Date.now().toString(),
+    date,
+    sets: validSets,
+    feeling,
+    notes,
+    tags: selectedTags,
+  };
+
+  try {
+    await onSave(workout);
+    onClose();
+  } catch (err) {
+    console.error(err);
+    setError('Не удалось сохранить тренировку');
+  }
+};
 
     const validSets = sets.filter((s) => s.weight > 0 && s.reps > 0);
     if (validSets.length === 0) {
