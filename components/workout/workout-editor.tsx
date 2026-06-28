@@ -87,26 +87,6 @@ export function WorkoutEditor({ onSave, onClose }: WorkoutEditorProps) {
     setError('Не удалось сохранить тренировку');
   }
 };
-
-    const validSets = sets.filter((s) => s.weight > 0 && s.reps > 0);
-    if (validSets.length === 0) {
-      setError(t.editor.validation.minSets);
-      return;
-    }
-
-    const workout: Workout = {
-      id: Date.now().toString(),
-      date,
-      sets: validSets,
-      feeling,
-      notes,
-      tags: selectedTags,
-    };
-
-    onSave(workout);
-    onClose();
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
