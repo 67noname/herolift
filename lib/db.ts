@@ -47,45 +47,41 @@ export const dbService = {
   },
 
   async addWorkout(workout: Workout): Promise<void> {
-    try {
-      const supabase = getSupabase();
-      // Insert workout
-      const { data: createdWorkout, error: workoutError } = await supabase
-        .from('workouts')
-        .insert([
-          {
-            id: workout.id,
-            date: workout.date,
-            feeling: workout.feeling,
-            notes: workout.notes,
-            tags: workout.tags,
-          },
-        ])
-        .select()
-        .single();
+  const supabase = getSupabase();
 
-      if (workoutError) throw workoutError;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-      // Insert sets
-      if (workout.sets.length > 0) {
-        const setsToInsert = workout.sets.map((set) => ({
-          workout_id: createdWorkout.id,
-          weight: set.weight,
-          reps: set.reps,
-        }));
+  if (!user) throw new Error('Not authenticated');
 
-        const { error: setsError } = await supabase
-          .from('workout_sets')
-          .insert(setsToInsert);
+  const { data: createdWorkout, error: workoutError } = await supabase
+    .from('workouts')
+    .insert({
+      id: workout.id,
+      user_id: user.id,
+      date: workout.date,
+      feeling: workout.feeling,
+      notes: workout.notes,
+      tags: workout.tags,
+    })
+    .select()
+    .single();
 
-        if (setsError) throw setsError;
-      }
-    } catch (error) {
-      console.error('[v0] Add workout error:', error);
-      throw error;
-    }
-  },
+  if (workoutError) throw workoutError;
 
+  const { error: setsError } = await supabase
+    .from('workout_sets')
+    .insert(
+      workout.sets.map((set) => ({
+        workout_id: createdWorkout.id,
+        weight: set.weight,
+        reps: set.reps,
+      }))
+    );
+
+  if (setsError) throw setsError;
+},
   async updateWorkout(id: string, workout: Workout): Promise<void> {
     try {
       const supabase = getSupabase();
