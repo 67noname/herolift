@@ -179,31 +179,4 @@ export const dbService = {
   // Realtime временно отключен
   return null;
 },
-    try {
-      const supabase = getSupabase();
-      const subscription = supabase
-        .channel('workouts_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'workouts',
-          },
-          async () => {
-            // Refetch all workouts on any change
-            const workouts = await dbService.getWorkouts();
-            callback(workouts);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch (error) {
-      console.error('[v0] Subscribe error:', error);
-      return null;
-    }
-  },
 };
