@@ -71,7 +71,7 @@ export function WorkoutEditor({ onSave, onClose }: WorkoutEditorProps) {
   }
 
   const workout: Workout = {
-    id: Date.now().toString(),
+    id: crypto.randomUUID(),
     date,
     sets: validSets,
     feeling,
