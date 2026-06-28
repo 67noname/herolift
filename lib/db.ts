@@ -174,8 +174,11 @@ export const dbService = {
   },
 
   subscribeToWorkouts(
-    callback: (workouts: Workout[]) => void
-  ): (() => void) | null {
+  callback: (workouts: Workout[]) => void
+): (() => void) | null {
+  // Realtime временно отключен
+  return null;
+},
     try {
       const supabase = getSupabase();
       const subscription = supabase
