@@ -83,9 +83,10 @@ export function WorkoutEditor({ onSave, onClose }: WorkoutEditorProps) {
     await onSave(workout);
     onClose();
   } catch (err) {
-    console.error(err);
-    setError('Не удалось сохранить тренировку');
-  }
+  console.error(err);
+  alert(JSON.stringify(err));
+  setError(err instanceof Error ? err.message : JSON.stringify(err));
+}
 };
   return (
     <motion.div
