@@ -117,6 +117,54 @@
   --sidebar-ring: #3DFF78;
 }
 
+/* ===========================
+   HERO MONO
+=========================== */
+
+[data-theme='mono'] {
+  --background: #000000;
+  --foreground: #ffffff;
+
+  --card: #0b0b0b;
+  --card-foreground: #ffffff;
+
+  --popover: #0b0b0b;
+  --popover-foreground: #ffffff;
+
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
+  --secondary: #111111;
+  --secondary-foreground: #ffffff;
+
+  --muted: #1a1a1a;
+  --muted-foreground: #9a9a9a;
+
+  --accent: #ffffff;
+  --accent-foreground: #000000;
+
+  --destructive: #ff4d4d;
+
+  --border: rgba(255,255,255,.10);
+  --input: rgba(255,255,255,.12);
+  --ring: #ffffff;
+
+  --chart-1: #ffffff;
+  --chart-2: #d9d9d9;
+  --chart-3: #b5b5b5;
+  --chart-4: #8f8f8f;
+  --chart-5: #6a6a6a;
+
+  --sidebar: #0b0b0b;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #111111;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255,255,255,.10);
+  --sidebar-ring: #ffffff;
+}
+
 @theme inline {
   --font-heading: var(--font-heading);
   --font-sans: var(--font-sans);
