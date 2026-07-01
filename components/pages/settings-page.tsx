@@ -11,40 +11,41 @@ interface SettingsPageProps {
   onLogout?: () => void;
 }
 
+type AppTheme = 'graphite' | 'green' | 'mono';
+
 export function SettingsPage({ onLogout }: SettingsPageProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [theme, setTheme] = useState<'graphite' | 'green'>('graphite');
+  const [theme, setTheme] = useState<AppTheme>('graphite');
 
-useEffect(() => {
-  const savedTheme =
-    (localStorage.getItem('theme') as 'graphite' | 'green') || 'graphite';
+  useEffect(() => {
+    const savedTheme =
+      (localStorage.getItem('theme') as AppTheme | null) || 'graphite';
 
-  setTheme(savedTheme);
+    setTheme(savedTheme);
 
-  if (savedTheme === 'green') {
-    document.documentElement.setAttribute('data-theme', 'green');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
-}, []);
+    if (savedTheme === 'green' || savedTheme === 'mono') {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, []);
 
-const changeTheme = (newTheme: 'graphite' | 'green') => {
-  setTheme(newTheme);
-  localStorage.setItem('theme', newTheme);
+  const changeTheme = (newTheme: AppTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
 
-  if (newTheme === 'green') {
-    document.documentElement.setAttribute('data-theme', 'green');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
-};
+    if (newTheme === 'green' || newTheme === 'mono') {
+      document.documentElement.setAttribute('data-theme', newTheme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  };
 
   const { user, logout } = useAuth();
   const { workouts, clearAllWorkouts } = useWorkouts(user?.id || null);
-
-  const handleExportPNG = async () => {
+    const handleExportPNG = async () => {
     setIsExporting(true);
 
     try {
@@ -55,17 +56,14 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Canvas context not found');
 
-      // Background
       ctx.fillStyle = '#050505';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Title
       ctx.fillStyle = '#A8FF35';
       ctx.font = 'bold 48px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(t.appName, canvas.width / 2, 80);
 
-      // Date (green accent)
       ctx.fillStyle = '#A8FF35';
       ctx.font = 'bold 26px Inter, sans-serif';
       ctx.fillText(
@@ -74,7 +72,6 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
         130
       );
 
-      // Statistics
       const totalWorkouts = workouts.length;
 
       const totalSets = workouts.reduce(
@@ -133,8 +130,7 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
           value: totalWorkouts,
         },
       ];
-
-      stats.forEach((stat, i) => {
+            stats.forEach((stat, i) => {
         const x = 60 + (i % 2) * 480;
         const y = statY + Math.floor(i / 2) * 200;
 
@@ -157,8 +153,9 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
 
         ctx.fillStyle = '#A8FF35';
         ctx.font = 'bold 40px Inter, sans-serif';
-        ctx.fillText(stat.value, x + 30, y + 125);
+        ctx.fillText(String(stat.value), x + 30, y + 125);
       });
+
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
@@ -206,21 +203,21 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
       setIsLoggingOut(false);
     }
   };
-
-  return (
+    return (
     <div className="px-4 pt-6 pb-4">
-        <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className="text-3xl font-bold text-primary mb-1">
-              ⚙️ {t.settings.title}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {t.nav.settings}
-            </p>
-          </motion.div>
-      
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-3xl font-bold text-primary mb-1">
+          ⚙️ {t.settings.title}
+        </h1>
+
+        <p className="text-muted-foreground text-sm">
+          {t.nav.settings}
+        </p>
+      </motion.div>
+
       <div className="mt-6 space-y-3">
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
@@ -244,50 +241,60 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
             className="text-primary group-hover:scale-110 transition-transform"
           />
         </motion.button>
+                <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.03 }}
+          className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-foreground">
+                🎨 Тема приложения
+              </h3>
 
-        <motion.div
-  initial={{ opacity: 0, scale: 0.9 }}
-  animate={{ opacity: 1, scale: 1 }}
-  transition={{ delay: 0.03 }}
-  className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
->
-  <div className="flex items-center justify-between mb-4">
-    <div>
-      <h3 className="font-semibold text-foreground">
-        🎨 Тема приложения
-      </h3>
+              <p className="text-sm text-muted-foreground">
+                Выберите оформление HeroLift
+              </p>
+            </div>
+          </div>
 
-      <p className="text-sm text-muted-foreground">
-        Выберите оформление HeroLift
-      </p>
-    </div>
-  </div>
+          <div className="flex bg-secondary rounded-full p-1">
+            <button
+              onClick={() => changeTheme('graphite')}
+              className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                theme === 'graphite'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Graphite
+            </button>
 
-  <div className="flex bg-secondary rounded-full p-1">
-    <button
-      onClick={() => changeTheme('graphite')}
-      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
-        theme === 'graphite'
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground'
-      }`}
-    >
-      Graphite
-    </button>
+            <button
+              onClick={() => changeTheme('green')}
+              className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                theme === 'green'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Hero Green
+            </button>
 
-    <button
-      onClick={() => changeTheme('green')}
-      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
-        theme === 'green'
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground'
-      }`}
-    >
-      Hero Green
-    </button>
-  </div>
-</motion.div>
-        
+            <button
+              onClick={() => changeTheme('mono')}
+              className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                theme === 'mono'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Hero Mono
+            </button>
+          </div>
+        </motion.div>
+
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -297,7 +304,6 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
           className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 transition-all duration-300"
         >
           <div className="text-left">
-            
             <h3 className="font-semibold text-destructive group-hover:text-destructive/80 transition-colors">
               Выход
             </h3>
@@ -319,7 +325,6 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
             />
           )}
         </motion.button>
-        
                 <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -342,6 +347,7 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
             className="text-destructive group-hover:scale-110 transition-transform"
           />
         </motion.button>
+
         {showDeleteConfirm && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -363,7 +369,7 @@ const changeTheme = (newTheme: 'graphite' | 'green') => {
               >
                 {t.settings.deleteConfirm}
               </button>
-              
+
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 py-3 bg-secondary text-foreground font-bold rounded-lg hover:bg-secondary/80 transition-colors text-sm"
