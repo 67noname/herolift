@@ -69,6 +69,7 @@ export const authService = {
   });
 
   return () => {
-    subscription.unsubscribe();
-  };
-}
+  subscription.unsubscribe();
+};
+  },
+};
