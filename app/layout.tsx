@@ -55,8 +55,8 @@ export default function RootLayout({
     try {
       const theme = localStorage.getItem('theme');
 
-      if (theme === 'green') {
-        document.documentElement.setAttribute('data-theme', 'green');
+      if (theme === 'green' || theme === 'mono') {
+        document.documentElement.setAttribute('data-theme', theme);
       } else {
         document.documentElement.removeAttribute('data-theme');
       }
