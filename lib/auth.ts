@@ -55,13 +55,20 @@ export const authService = {
   },
 
   onAuthStateChange(callback: (user: any | null) => void) {
-    const supabase = getSupabase();
-    if (!supabase) {
-      callback(null);
-      return () => {};
-    }
-    return supabase.auth.onAuthStateChange((event: string, session: any) => {
-      callback(session?.user || null);
-    });
-  },
-};
+  const supabase = getSupabase();
+
+  if (!supabase) {
+    callback(null);
+    return () => {};
+  }
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session?.user ?? null);
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}
