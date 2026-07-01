@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Script from 'next/script'
+import SoundProvider from '@/components/SoundProvider'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({
@@ -63,7 +64,10 @@ export default function RootLayout({
     } catch {}
   `}
 </Script>
-        {children}
+        
+<SoundProvider>
+  {children}
+</SoundProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
