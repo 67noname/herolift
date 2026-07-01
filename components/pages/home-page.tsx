@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Workout, Stats } from '@/lib/types';
+import { Workout } from '@/lib/types';
 import { calculateStats } from '@/lib/storage';
 import { WorkoutEditor } from '@/components/workout/workout-editor';
 import { FloatingButton } from '@/components/layout/floating-button';
 import { motion } from 'framer-motion';
-import { TrendingUp, Zap, Target, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { t } from '@/lib/i18n';
 
 interface HomePageProps {
@@ -16,6 +16,10 @@ interface HomePageProps {
 
 export function HomePage({ workouts, onWorkoutAdded }: HomePageProps) {
   const [showEditor, setShowEditor] = useState(false);
+  const [newRecord, setNewRecord] = useState<{
+  weight: number;
+  previousWeight: number;
+} | null>(null);
   const stats = calculateStats(workouts);
   const lastWorkout = workouts[workouts.length - 1];
 
@@ -25,6 +29,29 @@ export function HomePage({ workouts, onWorkoutAdded }: HomePageProps) {
   const bestSet = lastWorkout
     ? lastWorkout.sets.reduce((max, set) => (set.weight > max.weight ? set : max))
     : null;
+  const currentBestWeight =
+  workouts.length > 0
+    ? Math.max(...workouts.flatMap((workout) => workout.sets.map((set) => set.weight)))
+    : 0;
+
+const handleWorkoutSave = (workout: Workout) => {
+  const workoutBestWeight =
+    workout.sets.length > 0
+      ? Math.max(...workout.sets.map((set) => set.weight))
+      : 0;
+
+  if (workoutBestWeight > currentBestWeight) {
+    setNewRecord({
+      weight: workoutBestWeight,
+      previousWeight: currentBestWeight,
+    });
+  } else {
+    setNewRecord(null);
+  }
+
+  onWorkoutAdded(workout);
+  setShowEditor(false);
+};
 
   return (
     <>
@@ -34,6 +61,40 @@ export function HomePage({ workouts, onWorkoutAdded }: HomePageProps) {
           <h1 className="text-3xl font-bold text-primary mb-1">{t.appName}</h1>
           <p className="text-muted-foreground text-sm">{t.nav.home}</p>
         </motion.div>
+
+        {newRecord && (
+  <motion.div
+    initial={{ opacity: 0, y: 16, scale: 0.96 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    className="bg-primary/10 border border-primary/30 backdrop-blur-sm p-4 rounded-2xl mt-6"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h3 className="font-bold text-primary mb-1">
+          🏆 Новый рекорд!
+        </h3>
+
+        <p className="text-sm text-foreground">
+          Ты обновил максимум: {newRecord.weight} {t.common.lbs}
+        </p>
+
+        {newRecord.previousWeight > 0 && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Было: {newRecord.previousWeight} {t.common.lbs} · Прирост: +
+            {newRecord.weight - newRecord.previousWeight} {t.common.lbs}
+          </p>
+        )}
+      </div>
+
+      <button
+        onClick={() => setNewRecord(null)}
+        className="text-muted-foreground hover:text-primary transition-colors text-lg leading-none"
+      >
+        ×
+      </button>
+    </div>
+  </motion.div>
+)}
 
         {/* Last Workout Card */}
         {lastWorkout && (
@@ -161,7 +222,7 @@ export function HomePage({ workouts, onWorkoutAdded }: HomePageProps) {
 
       {/* Workout Editor Modal */}
       {showEditor && (
-        <WorkoutEditor onSave={onWorkoutAdded} onClose={() => setShowEditor(false)} />
+        <WorkoutEditor onSave={handleWorkoutSave} onClose={() => setShowEditor(false)} />
       )}
     </>
   );
