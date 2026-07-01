@@ -75,20 +75,25 @@ export function useWorkouts(userId: string | null) {
   );
 
   const deleteWorkout = useCallback(
-    async (id: string) => {
-      try {
-        setError(null);
-        await dbService.deleteWorkout(id);
-        const updated = await dbService.getWorkouts();
-        setWorkouts(updated);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to delete workout';
-        setError(message);
-        throw err;
-      }
-    },
-    []
-  );
+  async (id: string) => {
+    try {
+      setError(null);
+
+      await dbService.deleteWorkout(id);
+
+      setWorkouts((prev) =>
+        prev.filter((workout) => workout.id !== id)
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete workout';
+
+      setError(message);
+      throw err;
+    }
+  },
+  []
+);
 
   const clearAllWorkouts = useCallback(async () => {
     try {
