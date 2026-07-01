@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Trash2, Image, LogOut, Loader } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkouts } from '@/hooks/useWorkouts';
@@ -15,6 +15,31 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [theme, setTheme] = useState<'graphite' | 'green'>('graphite');
+
+useEffect(() => {
+  const savedTheme =
+    (localStorage.getItem('theme') as 'graphite' | 'green') || 'graphite';
+
+  setTheme(savedTheme);
+
+  if (savedTheme === 'green') {
+    document.documentElement.setAttribute('data-theme', 'green');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}, []);
+
+const changeTheme = (newTheme: 'graphite' | 'green') => {
+  setTheme(newTheme);
+  localStorage.setItem('theme', newTheme);
+
+  if (newTheme === 'green') {
+    document.documentElement.setAttribute('data-theme', 'green');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+};
 
   const { user, logout } = useAuth();
   const { workouts, clearAllWorkouts } = useWorkouts(user?.id || null);
@@ -184,18 +209,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
   return (
     <div className="px-4 pt-6 pb-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl font-bold text-primary mb-1">
-          ⚙️ {t.settings.title}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t.nav.settings}
-        </p>
-      </motion.div>
-
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-3xl font-bold text-primary mb-1">
+              ⚙️ {t.settings.title}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {t.nav.settings}
+            </p>
+          </motion.div>
+      
       <div className="mt-6 space-y-3">
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
@@ -220,6 +245,49 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           />
         </motion.button>
 
+        <motion.div
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ delay: 0.03 }}
+  className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
+>
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h3 className="font-semibold text-foreground">
+        🎨 Тема приложения
+      </h3>
+
+      <p className="text-sm text-muted-foreground">
+        Выберите оформление HeroLift
+      </p>
+    </div>
+  </div>
+
+  <div className="flex bg-secondary rounded-full p-1">
+    <button
+      onClick={() => changeTheme('graphite')}
+      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+        theme === 'graphite'
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground'
+      }`}
+    >
+      Graphite
+    </button>
+
+    <button
+      onClick={() => changeTheme('green')}
+      className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+        theme === 'green'
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground'
+      }`}
+    >
+      Hero Green
+    </button>
+  </div>
+</motion.div>
+        
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -229,6 +297,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 transition-all duration-300"
         >
           <div className="text-left">
+            
             <h3 className="font-semibold text-destructive group-hover:text-destructive/80 transition-colors">
               Выход
             </h3>
@@ -250,6 +319,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             />
           )}
         </motion.button>
+        
                 <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -272,7 +342,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             className="text-destructive group-hover:scale-110 transition-transform"
           />
         </motion.button>
-
         {showDeleteConfirm && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -294,7 +363,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               >
                 {t.settings.deleteConfirm}
               </button>
-
+              
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 py-3 bg-secondary text-foreground font-bold rounded-lg hover:bg-secondary/80 transition-colors text-sm"
