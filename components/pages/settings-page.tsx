@@ -12,12 +12,14 @@ interface SettingsPageProps {
 }
 
 type AppTheme = 'graphite' | 'green' | 'mono';
+type SoundMode = 'on' | 'off';
 
 export function SettingsPage({ onLogout }: SettingsPageProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('graphite');
+  const [soundMode, setSoundMode] = useState<SoundMode>('on');
 
   useEffect(() => {
     const savedTheme =
@@ -25,13 +27,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
     setTheme(savedTheme);
 
-    if (savedTheme === 'green' || savedTheme === 'mono') {
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-  }, []);
+      if (savedTheme === 'green' || savedTheme === 'mono') {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
 
+  const savedSoundMode =
+    (localStorage.getItem('soundMode') as SoundMode | null) || 'on';
+
+  setSoundMode(savedSoundMode);
+}, []);
+  
   const changeTheme = (newTheme: AppTheme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
@@ -42,6 +49,10 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       document.documentElement.removeAttribute('data-theme');
     }
   };
+  const changeSoundMode = (newMode: SoundMode) => {
+  setSoundMode(newMode);
+  localStorage.setItem('soundMode', newMode);
+};
 
   const { user, logout } = useAuth();
   const { workouts, clearAllWorkouts } = useWorkouts(user?.id || null);
@@ -295,6 +306,49 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           </div>
         </motion.div>
 
+                <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.04 }}
+          className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-foreground">
+                🔊 Звуки
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                Управление звуками приложения
+              </p>
+            </div>
+          </div>
+
+          <div className="flex bg-secondary rounded-full p-1">
+            <button
+              onClick={() => changeSoundMode('on')}
+              className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                soundMode === 'on'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Вкл все
+            </button>
+
+            <button
+              onClick={() => changeSoundMode('off')}
+              className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
+                soundMode === 'off'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              Выкл все
+            </button>
+          </div>
+        </motion.div>
+        
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
