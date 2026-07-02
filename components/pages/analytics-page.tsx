@@ -50,8 +50,12 @@ export function AnalyticsPage({ workouts }: AnalyticsPageProps) {
   };
 
   const { start, end } = getDateRange();
-  const periodWorkouts = getWorkoutsByDateRange(workouts, start, end);
-  const stats = calculateStats(periodWorkouts);
+
+const periodWorkouts = [...getWorkoutsByDateRange(workouts, start, end)].sort(
+  (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+);
+
+const stats = calculateStats(periodWorkouts);
 
   // Prepare chart data
   const chartData = {
