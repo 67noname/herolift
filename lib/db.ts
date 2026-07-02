@@ -128,28 +128,41 @@ export const dbService = {
   },
 
   async deleteWorkout(id: string): Promise<void> {
-    try {
-      const supabase = getSupabase();
-      // Delete sets first (cascade)
-      const { error: setsError } = await supabase
-        .from('workout_sets')
-        .delete()
-        .eq('workout_id', id);
+  try {
+    const supabase = getSupabase();
 
-      if (setsError) throw setsError;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      // Delete workout
-      const { error: workoutError } = await supabase
-        .from('workouts')
-        .delete()
-        .eq('id', id);
+    if (!user) throw new Error('Not authenticated');
 
-      if (workoutError) throw workoutError;
-    } catch (error) {
-      console.error('[v0] Delete workout error:', error);
-      throw error;
+    // Delete sets first
+    const { error: setsError } = await supabase
+      .from('workout_sets')
+      .delete()
+      .eq('workout_id', id);
+
+    if (setsError) throw setsError;
+
+    // Delete workout and verify it was actually deleted
+    const { data: deletedWorkout, error: workoutError } = await supabase
+      .from('workouts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select('id');
+
+    if (workoutError) throw workoutError;
+
+    if (!deletedWorkout || deletedWorkout.length === 0) {
+      throw new Error('Workout was not deleted from database');
     }
-  },
+  } catch (error) {
+    console.error('[v0] Delete workout error:', error);
+    throw error;
+  }
+},
 
   async clearAllWorkouts(): Promise<void> {
     try {
