@@ -21,18 +21,29 @@ export function HomePage({ workouts, onWorkoutAdded }: HomePageProps) {
   previousWeight: number;
 } | null>(null);
   const stats = calculateStats(workouts);
-  const lastWorkout = workouts[workouts.length - 1];
 
-  const maxWeight = lastWorkout
-    ? Math.max(...lastWorkout.sets.map((s) => s.weight))
-    : 0;
-  const bestSet = lastWorkout
-    ? lastWorkout.sets.reduce((max, set) => (set.weight > max.weight ? set : max))
-    : null;
-  const currentBestWeight =
+const sortedWorkouts = [...workouts].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+);
+
+const lastWorkout = sortedWorkouts[0];
+
+const bestSet = lastWorkout
+  ? lastWorkout.sets.reduce((max, set) =>
+      set.weight > max.weight ? set : max
+    )
+  : null;
+
+const currentBestWeight =
   workouts.length > 0
-    ? Math.max(...workouts.flatMap((workout) => workout.sets.map((set) => set.weight)))
+    ? Math.max(
+        ...workouts.flatMap((workout) =>
+          workout.sets.map((set) => set.weight)
+        )
+      )
     : 0;
+
+const maxWeight = currentBestWeight;
 
 const handleWorkoutSave = (workout: Workout) => {
   const workoutBestWeight =
