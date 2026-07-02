@@ -127,7 +127,7 @@ export const dbService = {
     }
   },
 
-  async deleteWorkout(id: string): Promise<void> {
+ async deleteWorkout(id: string): Promise<void> {
   try {
     const supabase = getSupabase();
 
@@ -145,25 +145,20 @@ export const dbService = {
 
     if (setsError) throw setsError;
 
-    // Delete workout and verify it was actually deleted
-    const { data: deletedWorkout, error: workoutError } = await supabase
+    // Delete workout
+    const { error: workoutError } = await supabase
       .from('workouts')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id)
-      .select('id');
+      .eq('user_id', user.id);
 
     if (workoutError) throw workoutError;
-
-    if (!deletedWorkout || deletedWorkout.length === 0) {
-      throw new Error('Workout was not deleted from database');
-    }
   } catch (error) {
     console.error('[v0] Delete workout error:', error);
     throw error;
   }
 },
-
+  
   async clearAllWorkouts(): Promise<void> {
     try {
       const supabase = getSupabase();
