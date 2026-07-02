@@ -143,19 +143,19 @@ export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
                     )}
 
                     {/* Delete Button */}
-                   <button
-                     type="button"
-                     onClick={async (event) => {
-                       event.preventDefault();
-                       event.stopPropagation();
+                  <button
+                    type="button"
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
 
-                       await handleDelete(workout.id);
-                     }}
-                     className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors text-sm font-bold"
-                   >
-                     <Trash2 size={16} />
-                     Delete Workout
-                   </button>
+                      void handleDelete(workout.id);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors text-sm font-bold cursor-pointer active:scale-95"
+                  >
+                    <Trash2 size={16} />
+                    Delete Workout
+                  </button>
                   </motion.div>
                 )}
               </motion.div>
