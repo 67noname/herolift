@@ -14,7 +14,9 @@ interface HistoryPageProps {
 export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const sortedWorkouts = [...workouts].reverse();
+  const sortedWorkouts = [...workouts].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+);
 
   const handleDelete = (id: string) => {
     onWorkoutDeleted(id);
