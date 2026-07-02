@@ -81,9 +81,8 @@ export function useWorkouts(userId: string | null) {
 
       await dbService.deleteWorkout(id);
 
-      setWorkouts((prev) =>
-        prev.filter((workout) => workout.id !== id)
-      );
+      const updated = await dbService.getWorkouts();
+      setWorkouts(updated);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to delete workout';
