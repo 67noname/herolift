@@ -131,28 +131,11 @@ export const dbService = {
   try {
     const supabase = getSupabase();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { error } = await supabase.rpc('delete_workout', {
+      p_workout_id: id,
+    });
 
-    if (!user) throw new Error('Not authenticated');
-
-    // Delete sets first
-    const { error: setsError } = await supabase
-      .from('workout_sets')
-      .delete()
-      .eq('workout_id', id);
-
-    if (setsError) throw setsError;
-
-    // Delete workout
-    const { error: workoutError } = await supabase
-      .from('workouts')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (workoutError) throw workoutError;
+    if (error) throw error;
   } catch (error) {
     console.error('[v0] Delete workout error:', error);
     throw error;
