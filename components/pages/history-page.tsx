@@ -19,13 +19,16 @@ export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
 );
 
   const handleDelete = async (id: string) => {
+  console.log('[HeroLift] delete clicked:', id);
+
   try {
     await onWorkoutDeleted(id);
     setExpandedId(null);
     setDeleteConfirmId(null);
+    console.log('[HeroLift] delete success:', id);
   } catch (error) {
-    console.error('[v0] Delete workout failed:', error);
-    alert('Ошибка удаления тренировки. Проверь Supabase DELETE policy.');
+    console.error('[HeroLift] delete failed:', error);
+    alert('Ошибка удаления тренировки. Открой консоль и посмотри ошибку.');
   }
 };
 
@@ -142,14 +145,17 @@ export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
                     {/* Delete Button */}
                    <button
                      type="button"
-                     onClick={(event) => {
+                     onClick={async (event) => {
+                       event.preventDefault();
                        event.stopPropagation();
-                       void handleDelete(workout.id);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg transition-colors text-sm font-medium"
-                 >
-                    <Trash2 size={16} /> Delete Workout
-                  </button>
+
+                       await handleDelete(workout.id);
+                     }}
+                     className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors text-sm font-bold"
+                   >
+                     <Trash2 size={16} />
+                     Delete Workout
+                   </button>
                   </motion.div>
                 )}
               </motion.div>
