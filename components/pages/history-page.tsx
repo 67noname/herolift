@@ -18,10 +18,16 @@ export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 );
 
-  const handleDelete = (id: string) => {
-    onWorkoutDeleted(id);
+  const handleDelete = async (id: string) => {
+  try {
+    await onWorkoutDeleted(id);
+    setExpandedId(null);
     setDeleteConfirmId(null);
-  };
+  } catch (error) {
+    console.error('[v0] Delete workout failed:', error);
+    alert('Ошибка удаления тренировки. Проверь Supabase DELETE policy.');
+  }
+};
 
   return (
     <div className="px-4 pt-6 pb-4">
@@ -134,12 +140,16 @@ export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
                     )}
 
                     {/* Delete Button */}
-                    <button
-                      onClick={() => handleDelete(workout.id)}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <Trash2 size={16} /> Delete Workout
-                    </button>
+                   <button
+                     type="button"
+                     onClick={(event) => {
+                       event.stopPropagation();
+                       void handleDelete(workout.id);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg transition-colors text-sm font-medium"
+                 >
+                    <Trash2 size={16} /> Delete Workout
+                  </button>
                   </motion.div>
                 )}
               </motion.div>
