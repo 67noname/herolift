@@ -8,7 +8,7 @@ import { t } from '@/lib/i18n';
 
 interface HistoryPageProps {
   workouts: Workout[];
-  onWorkoutDeleted: (id: string) => void;
+  onWorkoutDeleted: (id: string) => void | Promise<void>;
 }
 
 export function HistoryPage({ workouts, onWorkoutDeleted }: HistoryPageProps) {
