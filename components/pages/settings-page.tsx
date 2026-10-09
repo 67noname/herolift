@@ -1,11 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Trash2, Image, LogOut, Loader } from 'lucide-react';
+import { Trash2, Image, LogOut, Loader, FileSpreadsheet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkouts } from '@/hooks/useWorkouts';
+import { downloadWorkoutExcel } from '@/lib/export-excel';
 
 interface SettingsPageProps {
   onLogout?: () => void;
@@ -27,18 +28,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
     setTheme(savedTheme);
 
-      if (savedTheme === 'green' || savedTheme === 'mono') {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
+    if (savedTheme === 'green' || savedTheme === 'mono') {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
 
-  const savedSoundMode =
-    (localStorage.getItem('soundMode') as SoundMode | null) || 'on';
+    const savedSoundMode =
+      (localStorage.getItem('soundMode') as SoundMode | null) || 'on';
 
-  setSoundMode(savedSoundMode);
-}, []);
-  
+    setSoundMode(savedSoundMode);
+  }, []);
+
   const changeTheme = (newTheme: AppTheme) => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
@@ -49,14 +50,42 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       document.documentElement.removeAttribute('data-theme');
     }
   };
+
   const changeSoundMode = (newMode: SoundMode) => {
-  setSoundMode(newMode);
-  localStorage.setItem('soundMode', newMode);
-};
+    setSoundMode(newMode);
+    localStorage.setItem('soundMode', newMode);
+  };
 
   const { user, logout } = useAuth();
-  const { workouts, clearAllWorkouts } = useWorkouts(user?.id || null);
-    const handleExportPNG = async () => {
+  const { workouts, clearAllWorkouts, loading, error } =
+    useWorkouts(user?.id || null);
+
+  const handleExportExcel = () => {
+    if (loading) return;
+
+    if (error) {
+      alert('Не удалось загрузить тренировки. Обнови страницу.');
+      return;
+    }
+
+    if (workouts.length === 0) {
+      alert('Нет загруженных тренировок для экспорта.');
+      return;
+    }
+
+    try {
+      downloadWorkoutExcel(workouts);
+    } catch (err) {
+      console.error('Ошибка экспорта Excel:', err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Не удалось создать Excel-файл.'
+      );
+    }
+  };
+
+  const handleExportPNG = async () => {
     setIsExporting(true);
 
     try {
@@ -141,7 +170,8 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           value: totalWorkouts,
         },
       ];
-            stats.forEach((stat, i) => {
+
+      stats.forEach((stat, i) => {
         const x = 60 + (i % 2) * 480;
         const y = statY + Math.floor(i / 2) * 200;
 
@@ -214,7 +244,8 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       setIsLoggingOut(false);
     }
   };
-    return (
+
+  return (
     <div className="px-4 pt-6 pb-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -252,7 +283,34 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             className="text-primary group-hover:scale-110 transition-transform"
           />
         </motion.button>
-                <motion.div
+
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={handleExportExcel}
+          disabled={loading}
+          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-card/60 hover:border-border/40 transition-all duration-300"
+        >
+          <div className="text-left">
+            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+              Экспорт Excel
+            </h3>
+
+            <p className="text-sm text-muted-foreground">
+              {loading
+                ? 'Загрузка тренировок…'
+                : 'Все тренировки в файле .xlsx'}
+            </p>
+          </div>
+
+          <FileSpreadsheet
+            size={24}
+            className="text-primary group-hover:scale-110 transition-transform"
+          />
+        </motion.button>
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.03 }}
@@ -306,7 +364,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           </div>
         </motion.div>
 
-                <motion.div
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.04 }}
@@ -348,7 +406,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
           </div>
         </motion.div>
-        
+
         <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -379,7 +437,8 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             />
           )}
         </motion.button>
-                <motion.button
+
+        <motion.button
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
