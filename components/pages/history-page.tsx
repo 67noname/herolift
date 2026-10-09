@@ -26,8 +26,14 @@ export function HistoryPage({
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const handleDelete = async (id: string) => {
+   const handleDelete = async (id: string) => {
     if (deletingId) return;
+
+    const confirmed = window.confirm(
+      'Удалить эту тренировку вместе со всеми подходами? Отменить удаление нельзя.'
+    );
+
+    if (!confirmed) return;
 
     setDeletingId(id);
 
