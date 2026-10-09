@@ -58,7 +58,14 @@ export default function App() {
       )}
       {currentTab === 'analytics' && <AnalyticsPage workouts={workouts} />}
       {currentTab === 'records' && <RecordsPage workouts={workouts} />}
-      {currentTab === 'settings' && <SettingsPage />}
+            {currentTab === 'settings' && (
+        <SettingsPage
+          workouts={workouts}
+          loading={loading}
+          error={error}
+          onClearAllWorkouts={clearAllWorkouts}
+        />
+      )}
 
       <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
     </main>
