@@ -7,7 +7,7 @@ export interface Workout {
   id: string;
   date: string;
   sets: WorkoutSet[];
-  feeling: 'light' | 'normal' | 'heavy' | 'exhausted';
+  feeling: string;
   notes: string;
   tags: string[];
 }
