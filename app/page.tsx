@@ -43,7 +43,11 @@ export default function App() {
         <HomePage workouts={workouts} onWorkoutAdded={addWorkout} />
       )}
       {currentTab === 'history' && (
-        <HistoryPage workouts={workouts} onWorkoutDeleted={deleteWorkout} />
+                <HistoryPage
+          workouts={workouts}
+          onWorkoutDeleted={deleteWorkout}
+          onWorkoutUpdated={updateWorkout}
+        />
       )}
       {currentTab === 'analytics' && <AnalyticsPage workouts={workouts} />}
       {currentTab === 'records' && <RecordsPage workouts={workouts} />}
