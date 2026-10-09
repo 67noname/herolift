@@ -174,29 +174,37 @@ export function HistoryPage({
             <label className="block text-sm text-muted-foreground">
               Тег
 
-              <select
-                value={selectedTag}
-                onChange={(event) => {
-                  setSelectedTag(event.target.value);
-                  setExpandedId(null);
-                }}
-                className="mt-2 w-full min-w-0 bg-background border border-border/50 rounded-xl px-3 py-3 text-foreground focus:outline-none focus:border-primary"
-              >
-                <option value="">Все теги</option>
+              <div className="relative mt-2">
+  <select
+    value={selectedTag}
+    onChange={(event) => {
+      setSelectedTag(event.target.value);
+      setExpandedId(null);
+    }}
+    className="block w-full min-w-0 appearance-none bg-background border border-border/50 rounded-xl pl-4 pr-12 py-3 text-foreground focus:outline-none focus:border-primary"
+  >
+    <option value="">Все теги</option>
 
-                {selectedTag &&
-                  !availableTags.includes(selectedTag) && (
-                    <option value={selectedTag}>
-                      {selectedTag}
-                    </option>
-                  )}
+    {selectedTag &&
+      !availableTags.includes(selectedTag) && (
+        <option value={selectedTag}>
+          {selectedTag}
+        </option>
+      )}
 
-                {availableTags.map((tag) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
+    {availableTags.map((tag) => (
+      <option key={tag} value={tag}>
+        {tag}
+      </option>
+    ))}
+  </select>
+
+  <ChevronDown
+    size={18}
+    aria-hidden="true"
+    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+  />
+</div>
             </label>
 
             <div className="grid grid-cols-2 gap-3">
