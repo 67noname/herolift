@@ -83,46 +83,22 @@ export const dbService = {
   if (setsError) throw setsError;
 },
   async updateWorkout(id: string, workout: Workout): Promise<void> {
-    try {
-      const supabase = getSupabase();
-      // Update workout
-      const { error: workoutError } = await supabase
-        .from('workouts')
-        .update({
-          date: workout.date,
-          feeling: workout.feeling,
-          notes: workout.notes,
-          tags: workout.tags,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+    const supabase = getSupabase();
 
-      if (workoutError) throw workoutError;
+    const { error } = await supabase.rpc('edit_workout_v1', {
+      p_workout_id: id,
+      p_date: workout.date,
+      p_feeling: workout.feeling,
+      p_notes: workout.notes ?? '',
+      p_tags: workout.tags ?? [],
+      p_sets: workout.sets.map((set) => ({
+        weight: set.weight,
+        reps: set.reps,
+      })),
+    });
 
-      // Delete old sets
-      const { error: deleteError } = await supabase
-        .from('workout_sets')
-        .delete()
-        .eq('workout_id', id);
-
-      if (deleteError) throw deleteError;
-
-      // Insert new sets
-      if (workout.sets.length > 0) {
-        const setsToInsert = workout.sets.map((set) => ({
-          workout_id: id,
-          weight: set.weight,
-          reps: set.reps,
-        }));
-
-        const { error: setsError } = await supabase
-          .from('workout_sets')
-          .insert(setsToInsert);
-
-        if (setsError) throw setsError;
-      }
-    } catch (error) {
-      console.error('[v0] Update workout error:', error);
+    if (error) {
+      console.error('Ошибка изменения тренировки:', error);
       throw error;
     }
   },
