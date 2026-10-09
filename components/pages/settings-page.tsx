@@ -1,26 +1,37 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Trash2, Image, LogOut, Loader, FileSpreadsheet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
 import { useAuth } from '@/hooks/useAuth';
-import { useWorkouts } from '@/hooks/useWorkouts';
+import type { Workout } from '@/lib/types';
 import { downloadWorkoutExcel } from '@/lib/export-excel';
 
 interface SettingsPageProps {
   onLogout?: () => void;
+  workouts: Workout[];
+  loading: boolean;
+  error: string | null;
+  onClearAllWorkouts: () => Promise<void>;
 }
 
 type AppTheme = 'graphite' | 'green' | 'mono';
 type SoundMode = 'on' | 'off';
 
-export function SettingsPage({ onLogout }: SettingsPageProps) {
+export function SettingsPage({
+  onLogout,
+  workouts,
+  loading,
+  error,
+  onClearAllWorkouts,
+}: SettingsPageProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [theme, setTheme] = useState<AppTheme>('graphite');
   const [soundMode, setSoundMode] = useState<SoundMode>('on');
+
+  const { logout } = useAuth();
 
   useEffect(() => {
     const savedTheme =
@@ -56,10 +67,6 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     localStorage.setItem('soundMode', newMode);
   };
 
-  const { user, logout } = useAuth();
-  const { workouts, clearAllWorkouts, loading, error } =
-    useWorkouts(user?.id || null);
-
   const handleExportExcel = () => {
     if (loading) return;
 
@@ -85,7 +92,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   };
 
-    const handleExportPNG = async () => {
+  const handleExportPNG = async () => {
     if (isExporting) return;
 
     if (loading || error) {
@@ -133,6 +140,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         ctx.fillStyle = color;
 
         let fontSize = size;
+
         const setFont = () => {
           ctx.font = `${bold ? '700' : '400'} ${fontSize}px ${fontFamily}`;
         };
@@ -173,6 +181,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       };
 
       const totalWorkouts = workouts.length;
+
       const totalSets = workouts.reduce(
         (total, workout) => total + workout.sets.length,
         0
@@ -220,7 +229,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
           value: `${formatNumber(totalTonnage)} кг`,
         },
         {
-          label: 'Количество тренировок',
+          label: 'Тренировок',
           value: formatNumber(totalWorkouts),
         },
       ];
@@ -259,6 +268,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       stats.forEach((stat, index) => {
         const x = left + (index % 2) * (cardWidth + gap);
         const y = top + Math.floor(index / 2) * (cardHeight + gap);
+        const centerX = x + cardWidth / 2;
 
         roundedRect(x, y, cardWidth, cardHeight, 32);
 
@@ -271,25 +281,25 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
         drawText(
           stat.label,
-          x + 36,
-          y + 68,
-          26,
-          '#B0B0B0',
-          cardWidth - 72
+          centerX,
+          y + 82,
+          38,
+          '#E0E0E0',
+          cardWidth - 64,
+          true,
+          'center'
         );
 
         drawText(
           stat.value,
-          x + 36,
-          y + 170,
+          centerX,
+          y + 190,
           60,
           accent,
-          cardWidth - 72,
-          true
+          cardWidth - 64,
+          true,
+          'center'
         );
-
-        ctx.fillStyle = 'rgba(168, 255, 53, 0.45)';
-        ctx.fillRect(x + 36, y + 220, 44, 3);
       });
 
       const today = new Date();
@@ -342,24 +352,25 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
   const handleClearAll = async () => {
     try {
-      await clearAllWorkouts();
+      await onClearAllWorkouts();
       setShowDeleteConfirm(false);
-    } catch (error) {
-      console.error('[v0] Clear workouts error:', error);
+    } catch (err) {
+      console.error('Ошибка удаления данных:', err);
+      alert('Не удалось удалить данные. Попробуй ещё раз.');
     }
   };
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-
       await logout();
 
       if (onLogout) {
         onLogout();
       }
-    } catch (error) {
-      console.error('[v0] Logout error:', error);
+    } catch (err) {
+      console.error('Ошибка выхода:', err);
+      alert('Не удалось выйти из аккаунта. Попробуй ещё раз.');
     } finally {
       setIsLoggingOut(false);
     }
@@ -367,10 +378,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
   return (
     <div className="px-4 pt-6 pb-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <h1 className="text-3xl font-bold text-primary mb-1">
           ⚙️ {t.settings.title}
         </h1>
@@ -378,15 +386,14 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         <p className="text-muted-foreground text-sm">
           {t.nav.settings}
         </p>
-      </motion.div>
+      </div>
 
       <div className="mt-6 space-y-3">
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <button
+          type="button"
           onClick={handleExportPNG}
-          disabled={isExporting}
-          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-card/60 hover:border-border/40 transition-all duration-300"
+          disabled={isExporting || loading}
+          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-card/60 hover:border-border/40 transition-colors duration-300"
         >
           <div className="text-left">
             <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -402,15 +409,13 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             size={24}
             className="text-primary group-hover:scale-110 transition-transform"
           />
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
           onClick={handleExportExcel}
           disabled={loading}
-          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-card/60 hover:border-border/40 transition-all duration-300"
+          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-card/60 hover:border-border/40 transition-colors duration-300"
         >
           <div className="text-left">
             <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -418,9 +423,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </h3>
 
             <p className="text-sm text-muted-foreground">
-              {loading
-                ? 'Загрузка тренировок…'
-                : 'Все тренировки в файле .xlsx'}
+              Все тренировки в файле .xlsx
             </p>
           </div>
 
@@ -428,14 +431,9 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             size={24}
             className="text-primary group-hover:scale-110 transition-transform"
           />
-        </motion.button>
+        </button>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.03 }}
-          className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
-        >
+        <div className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-foreground">
@@ -450,6 +448,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
           <div className="flex bg-secondary rounded-full p-1">
             <button
+              type="button"
               onClick={() => changeTheme('graphite')}
               className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
                 theme === 'graphite'
@@ -461,6 +460,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
 
             <button
+              type="button"
               onClick={() => changeTheme('green')}
               className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
                 theme === 'green'
@@ -472,6 +472,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
 
             <button
+              type="button"
               onClick={() => changeTheme('mono')}
               className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
                 theme === 'mono'
@@ -482,14 +483,9 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               Hero Mono
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.04 }}
-          className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl"
-        >
+        <div className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-foreground">
@@ -504,6 +500,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
           <div className="flex bg-secondary rounded-full p-1">
             <button
+              type="button"
               onClick={() => changeSoundMode('on')}
               className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
                 soundMode === 'on'
@@ -515,6 +512,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             </button>
 
             <button
+              type="button"
               onClick={() => changeSoundMode('off')}
               className={`flex-1 py-2 rounded-full text-sm font-medium transition-all ${
                 soundMode === 'off'
@@ -525,15 +523,13 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               Выкл все
             </button>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.05 }}
+        <button
+          type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 transition-all duration-300"
+          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group disabled:opacity-50 hover:bg-destructive/10 transition-colors duration-300"
         >
           <div className="text-left">
             <h3 className="font-semibold text-destructive group-hover:text-destructive/80 transition-colors">
@@ -556,14 +552,12 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               className="text-destructive group-hover:scale-110 transition-transform"
             />
           )}
-        </motion.button>
+        </button>
 
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
+        <button
+          type="button"
           onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
-          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group hover:bg-destructive/10 transition-all duration-300"
+          className="w-full bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl flex items-center justify-between group hover:bg-destructive/10 transition-colors duration-300"
         >
           <div className="text-left">
             <h3 className="font-semibold text-destructive group-hover:text-destructive/80 transition-colors">
@@ -579,14 +573,10 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
             size={24}
             className="text-destructive group-hover:scale-110 transition-transform"
           />
-        </motion.button>
+        </button>
 
         {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card/40 border border-destructive/50 backdrop-blur-sm p-6 rounded-2xl"
-          >
+          <div className="bg-card/40 border border-destructive/50 backdrop-blur-sm p-6 rounded-2xl">
             <p className="text-foreground mb-4 font-medium">
               {t.settings.clearConfirm}
             </p>
@@ -597,6 +587,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
 
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={handleClearAll}
                 className="flex-1 py-3 bg-destructive text-destructive-foreground font-bold rounded-lg hover:bg-destructive/90 transition-colors text-sm"
               >
@@ -604,22 +595,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
               </button>
 
               <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1 py-3 bg-secondary text-foreground font-bold rounded-lg hover:bg-secondary/80 transition-colors text-sm"
               >
                 {t.settings.cancel}
               </button>
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl mt-6 text-center"
-      >
+      <div className="bg-card/40 border border-border/20 backdrop-blur-sm p-6 rounded-2xl mt-6 text-center">
         <p className="text-sm text-primary font-medium mb-2">
           {t.appName}
         </p>
@@ -631,7 +618,7 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
         <p className="text-xs text-muted-foreground mt-3">
           ✨ Премиум трекер тренировок
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }
