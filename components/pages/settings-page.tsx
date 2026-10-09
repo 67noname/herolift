@@ -85,7 +85,18 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
     }
   };
 
-  const handleExportPNG = async () => {
+    const handleExportPNG = async () => {
+    if (isExporting) return;
+
+    if (loading || error) {
+      alert(
+        loading
+          ? 'Тренировки ещё загружаются. Попробуй через пару секунд.'
+          : 'Не удалось загрузить тренировки. Обнови страницу.'
+      );
+      return;
+    }
+
     setIsExporting(true);
 
     try {
@@ -94,34 +105,82 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       canvas.height = 1080;
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas context not found');
 
-      ctx.fillStyle = '#050505';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (!ctx) {
+        throw new Error('Не удалось создать изображение.');
+      }
 
-      ctx.fillStyle = '#A8FF35';
-      ctx.font = 'bold 48px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(t.appName, canvas.width / 2, 80);
+      const accent = '#A8FF35';
+      const fontFamily = 'Arial, Helvetica, sans-serif';
 
-      ctx.fillStyle = '#A8FF35';
-      ctx.font = 'bold 26px Inter, sans-serif';
-      ctx.fillText(
-        new Date().toLocaleDateString('ru-RU'),
-        canvas.width / 2,
-        130
-      );
+      const formatNumber = (value: number) =>
+        value.toLocaleString('ru-RU', {
+          maximumFractionDigits: 2,
+        });
+
+      const drawText = (
+        text: string,
+        x: number,
+        y: number,
+        size: number,
+        color: string,
+        maxWidth: number,
+        bold = false,
+        align: CanvasTextAlign = 'left'
+      ) => {
+        ctx.textAlign = align;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = color;
+
+        let fontSize = size;
+        const setFont = () => {
+          ctx.font = `${bold ? '700' : '400'} ${fontSize}px ${fontFamily}`;
+        };
+
+        setFont();
+
+        while (ctx.measureText(text).width > maxWidth && fontSize > 12) {
+          fontSize -= 1;
+          setFont();
+        }
+
+        ctx.fillText(text, x, y, maxWidth);
+      };
+
+      const roundedRect = (
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        radius: number
+      ) => {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(
+          x + width,
+          y + height,
+          x + width - radius,
+          y + height
+        );
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      };
 
       const totalWorkouts = workouts.length;
-
       const totalSets = workouts.reduce(
-        (acc, workout) => acc + workout.sets.length,
+        (total, workout) => total + workout.sets.length,
         0
       );
 
       const totalTonnage = workouts.reduce(
-        (acc, workout) =>
-          acc +
+        (total, workout) =>
+          total +
           workout.sets.reduce(
             (sum, set) => sum + set.weight * set.reps,
             0
@@ -130,91 +189,152 @@ export function SettingsPage({ onLogout }: SettingsPageProps) {
       );
 
       const personalBest = workouts.reduce(
-        (max, workout) =>
-          Math.max(max, ...workout.sets.map((set) => set.weight)),
+        (best, workout) =>
+          workout.sets.reduce(
+            (maximum, set) => Math.max(maximum, set.weight),
+            best
+          ),
         0
       );
 
-      const avgWeight =
-        totalSets > 0
-          ? Math.round(
-              workouts.reduce(
-                (acc, workout) =>
-                  acc +
-                  workout.sets.reduce(
-                    (sum, set) => sum + set.weight,
-                    0
-                  ),
-                0
-              ) / totalSets
-            )
-          : 0;
+      const sumWeights = workouts.reduce(
+        (total, workout) =>
+          total + workout.sets.reduce((sum, set) => sum + set.weight, 0),
+        0
+      );
 
-      const statY = 250;
+      const averageWeight =
+        totalSets > 0 ? Math.round(sumWeights / totalSets) : 0;
 
       const stats = [
         {
-          label: '🏆 ' + t.records.personalBest,
-          value: personalBest + ' ' + t.common.lbs,
+          label: 'Личный рекорд',
+          value: `${formatNumber(personalBest)} кг`,
         },
         {
-          label: '📊 ' + t.analytics.avgWeight,
-          value: avgWeight + ' ' + t.common.lbs,
+          label: 'Средний вес',
+          value: `${formatNumber(averageWeight)} кг`,
         },
         {
-          label: '💪 ' + t.analytics.totalTonnage,
-          value: totalTonnage.toLocaleString() + ' ' + t.common.lbs,
+          label: 'Общий тоннаж',
+          value: `${formatNumber(totalTonnage)} кг`,
         },
         {
-          label: '🔥 ' + t.records.totalWorkouts,
-          value: totalWorkouts,
+          label: 'Количество тренировок',
+          value: formatNumber(totalWorkouts),
         },
       ];
 
-      stats.forEach((stat, i) => {
-        const x = 60 + (i % 2) * 480;
-        const y = statY + Math.floor(i / 2) * 200;
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.shadowColor = '#A8FF35';
-        ctx.shadowBlur = 10;
+      drawText(
+        'HeroLift',
+        540,
+        140,
+        72,
+        accent,
+        952,
+        true,
+        'center'
+      );
 
-        ctx.fillStyle = '#151515';
-        ctx.fillRect(x, y, 420, 180);
+      drawText(
+        'За всё время',
+        540,
+        200,
+        28,
+        '#A3A3A3',
+        952,
+        false,
+        'center'
+      );
 
-        ctx.strokeStyle = 'rgba(255,255,255,.10)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, 420, 180);
+      const cardWidth = 464;
+      const cardHeight = 280;
+      const gap = 24;
+      const left = 64;
+      const top = 280;
 
-        ctx.shadowBlur = 0;
+      stats.forEach((stat, index) => {
+        const x = left + (index % 2) * (cardWidth + gap);
+        const y = top + Math.floor(index / 2) * (cardHeight + gap);
 
-        ctx.fillStyle = '#a0a0a0';
-        ctx.font = '18px Inter, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(stat.label, x + 30, y + 58);
+        roundedRect(x, y, cardWidth, cardHeight, 32);
 
-        ctx.fillStyle = '#A8FF35';
-        ctx.font = 'bold 40px Inter, sans-serif';
-        ctx.fillText(String(stat.value), x + 30, y + 125);
+        ctx.fillStyle = '#121212';
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(168, 255, 53, 0.22)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        drawText(
+          stat.label,
+          x + 36,
+          y + 68,
+          26,
+          '#B0B0B0',
+          cardWidth - 72
+        );
+
+        drawText(
+          stat.value,
+          x + 36,
+          y + 170,
+          60,
+          accent,
+          cardWidth - 72,
+          true
+        );
+
+        ctx.fillStyle = 'rgba(168, 255, 53, 0.45)';
+        ctx.fillRect(x + 36, y + 220, 44, 3);
       });
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
+      const today = new Date();
 
-          const element = document.createElement('a');
-          element.href = url;
-          element.download = `herolift-${new Date()
-            .toISOString()
-            .split('T')[0]}.png`;
+      drawText(
+        `Дата выгрузки: ${today.toLocaleDateString('ru-RU')}`,
+        540,
+        968,
+        24,
+        '#808080',
+        952,
+        false,
+        'center'
+      );
 
-          element.click();
-
-          URL.revokeObjectURL(url);
-        }
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(new Error('Не удалось сформировать PNG.'));
+          }
+        }, 'image/png');
       });
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Ошибка при экспорте');
+
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `HeroLift-${today.getFullYear()}-${month}-${day}.png`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error('Ошибка экспорта PNG:', err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Не удалось сохранить изображение.'
+      );
     } finally {
       setIsExporting(false);
     }
