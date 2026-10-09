@@ -69,7 +69,9 @@ export default function SoundProvider({
   };
 
   useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
+        const handleClick = (event: MouseEvent) => {
+      if (!event.isTrusted) return;
+
       const target = event.target as HTMLElement | null;
 
       if (!target) return;
