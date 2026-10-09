@@ -15,7 +15,8 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 export default function App() {
   const [currentTab, setCurrentTab] = useState('home');
   const { user, loading: authLoading, isConfigured } = useAuth();
-  const { workouts, addWorkout, deleteWorkout } = useWorkouts(user?.id || null);
+    const { workouts, addWorkout, updateWorkout, deleteWorkout } =
+    useWorkouts(user?.id || null);
 
   if (!isConfigured) {
     return <SetupPage />;
