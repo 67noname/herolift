@@ -113,7 +113,7 @@ export const t = {
     deleteConfirm: 'Подтвердить',
     cancel: 'Отмена',
     about: 'О приложении',
-    version: 'Версия 1.0.0',
+        version: 'Версия 1.1',
   },
 
   // Recommendations
