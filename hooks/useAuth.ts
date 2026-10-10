@@ -65,26 +65,26 @@ export function useAuth() {
     []
   );
 
-  const logout = useCallback(async () => {
-    try {
-      setError(null);
-      await authService.logout();
-      setUser(null);
-      return { success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to logout';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, []);
+  
+const logout = useCallback(async () => {
+  try {
+    setError(null);
 
-  return {
-    user,
-    loading,
-    error,
-    isAuthenticated: !!user,
-    isConfigured,
-    sendMagicLink,
-    logout,
-  };
-}
+    const result = await authService.logout();
+
+    if (!result.success) {
+      throw new Error('Не удалось завершить сеанс');
+    }
+
+    setUser(null);
+    return { success: true };
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Не удалось выйти из аккаунта';
+
+    setError(message);
+    return { success: false, error: message };
+  }
+}, []);
