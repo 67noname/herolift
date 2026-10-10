@@ -88,3 +88,13 @@ const logout = useCallback(async () => {
     return { success: false, error: message };
   }
 }, []);
+  return {
+    user,
+    loading,
+    error,
+    isAuthenticated: !!user,
+    isConfigured,
+    sendMagicLink,
+    logout,
+  };
+}
