@@ -45,7 +45,7 @@ export const authService = {
       if (!supabase) {
         return { success: true };
       }
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
       return { success: true };
     } catch (error) {
